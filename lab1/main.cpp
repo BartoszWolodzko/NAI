@@ -23,13 +23,10 @@ int main(int argc, char **argv) {
   formatery["sin"] = [](vector<double> x) { return sin(x[0]); };
   formatery["add"] = [](vector<double> x) { return x[0] + x[1]; };
   formatery["mod"] = [](vector<double> x) { return (int)x[0] % (int)x[1]; };
-  formatery[""] = [](vector<double> x) {
-      cout << "sin x - oblicza sinus od x\n add x y - oblicza sume\n mod x y - oblicza x%y";
-      return 0;
-  };
 
   try {
     vector<string> argumenty(argv, argv + argc);
+
     string klucz = argumenty[1];
 
     vector<double> wartosci;
@@ -39,7 +36,12 @@ int main(int argc, char **argv) {
     mojamapa_t mojamapa = {{klucz, wartosci}};
     wypisz(mojamapa, formatery[klucz]);
     } catch (exception &e) {
-    cout << "Blad: " << e.what() << endl;
+      if (argc == 1) {
+        cout << "sin x - oblicza sinus od x\n add x y - oblicza sume\n mod x y - oblicza x%y" << endl;
+      } else {
+        cout << "Niepoprawne argumenty" << endl;
+          cout << "Blad: " << e.what() << endl;
+      }
       return 1;
     }
     return 0;
