@@ -75,18 +75,94 @@ int main() {
     };
 
     for (int i = 0; i < 20; ++i) {
+        std::cout << "Pomiar "<<i+1 << " Ilosc probow "<< 100000*(i+1) << std::endl;
         auto begin = std::chrono::high_resolution_clock::now();
-        auto result = brute_force_or_random_probe(domains["gomez_and_levy"], domain, std::pow(4,i));
+        auto result = brute_force_or_random_probe(domains["gomez_and_levy"], domain, 100000*(i+1));
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
         printf("Time measured: %.3f seconds.\n", elapsed.count() * 1e-9);
-        std::cout << "Best point: " << result.first[0] << ", " << result.first[1] << std::endl;
-        std::cout << i << std::endl;
+        std::cout << "Best point: " << result.first[0] << ", " << result.first[1] << std::endl<<std::endl;
     }
-
-
-
-
     return 0;
 }
+/*
+Pomiar 1 Ilosc probow 100000
+Time measured: 0.067 seconds.
+Best point: 0.997718, 0.98911
 
+Pomiar 2 Ilosc probow 200000
+Time measured: 0.132 seconds.
+Best point: 0.998483, 1.01244
+
+Pomiar 3 Ilosc probow 300000
+Time measured: 0.198 seconds.
+Best point: 0.999384, 0.999796
+
+Pomiar 4 Ilosc probow 400000
+Time measured: 0.273 seconds.
+Best point: 1.00004, 1.01014
+
+Pomiar 5 Ilosc probow 500000
+Time measured: 0.327 seconds.
+Best point: 0.999517, 1.00732
+
+Pomiar 6 Ilosc probow 600000
+Time measured: 0.391 seconds.
+Best point: 0.998748, 0.994603
+
+Pomiar 7 Ilosc probow 700000
+Time measured: 0.459 seconds.
+Best point: 1.0004, 0.994566
+
+Pomiar 8 Ilosc probow 800000
+Time measured: 0.524 seconds.
+Best point: 0.999589, 1.00605
+
+Pomiar 9 Ilosc probow 900000
+Time measured: 0.587 seconds.
+Best point: 1.00059, 0.992003
+
+Pomiar 10 Ilosc probow 1000000
+Time measured: 0.651 seconds.
+Best point: 1.00046, 1.00354
+
+Pomiar 11 Ilosc probow 1100000
+Time measured: 0.714 seconds.
+Best point: 1.00012, 0.998024
+
+Pomiar 12 Ilosc probow 1200000
+Time measured: 0.780 seconds.
+Best point: 0.999636, 0.991534
+
+Pomiar 13 Ilosc probow 1300000
+Time measured: 0.843 seconds.
+Best point: 0.999436, 1.00427
+
+Pomiar 14 Ilosc probow 1400000
+Time measured: 0.911 seconds.
+Best point: 1.00011, 0.993225
+
+Pomiar 15 Ilosc probow 1500000
+Time measured: 0.974 seconds.
+Best point: 0.999616, 1.00826
+
+Pomiar 16 Ilosc probow 1600000
+Time measured: 1.039 seconds.
+Best point: 1.00035, 0.995099
+
+Pomiar 17 Ilosc probow 1700000
+Time measured: 1.102 seconds.
+Best point: 1.00024, 1.0068
+
+Pomiar 18 Ilosc probow 1800000
+Time measured: 1.172 seconds.
+Best point: 0.999905, 0.996703
+
+Pomiar 19 Ilosc probow 1900000
+Time measured: 1.249 seconds.
+Best point: 1.00037, 0.997238
+
+Pomiar 20 Ilosc probow 2000000
+Time measured: 1.305 seconds.
+Best point: 0.99988, 0.995512
+ */
