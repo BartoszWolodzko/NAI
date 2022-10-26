@@ -23,51 +23,65 @@ auto brute_force = [](
     return best_point;
 };
 
+//hill climbing
 auto hill_climbing = [](
-        const std::function<double(std::pair<double, double> pair)> &f,
-        const std::function<std::pair<double, double>(int, int)> &start_point,
-        const std::function<std::vector<std::pair<double, double>>(std::pair<double, double>, int, int)> &get_close_points,
-int max_iterations, int a, int b) {
+        const std::function<double(std::pair<double, double>)> &f,
+        const std::function<std::pair<double, double>(int, int)> &domain,
+        int iterations, int a, int b) {
 
-std::pair<double, double> best_p = start_point(a, b);
-for (int iteration = 0; iteration < max_iterations; iteration++) {
-auto close_points = get_close_points(best_p, a, b);
-auto best_neighbour = *min_element(
-        close_points.begin(),
-        close_points.end(),
-        [f](auto a, auto b) {
-            return f(a) > f(b);
+    auto current_p = domain(a, b);
+    auto best_point = current_p;
+    for (int i = 0; i < iterations; ++i) {
+        auto new_p = domain(a, b);
+        if (f(new_p) < f(current_p)) {
+            current_p = new_p;
         }
-);
-if (f(best_neighbour) < f(best_p))
-best_p = best_neighbour;
-}
-return best_p;
+        if (f(current_p) < f(best_point)) {
+            best_point = current_p;
+        }
+    }
+    return best_point;
+};
+
+auto domain_generator_simulated_annealing = [](auto p) {
+    std::normal_distribution<double> n(0.0, 0.3);
+    for (auto& e : p) {
+        e = e + n(mt_generator);
+    }
+    return p;
 };
 
 auto simulated_annealing = [](
         const std::function<double(std::pair<double, double> pair)> &f,
         const std::function<std::pair<double, double>(int, int)> &domain,
-        int iterations, int a, int b) {
+        int K, int a, int b) {
 
     std::vector<std::pair<double, double>> pairsVector;
+    std::pair<double, double> current_p = domain(a, b);
+    std::pair<double, double> best_p = current_p;
     std::uniform_real_distribution<double> uk(0, 1);
-    double ukValue = uk(mt_generator);
-    auto best_point = domain(a, b);
-    pairsVector.push_back(best_point);
-    for (int i = 0; i < iterations; ++i) {
-        auto tk = domain(a, b);
-        if (f(tk) <= f(best_point)) {
-            best_point = tk;
-            pairsVector.push_back(best_point);
+
+    for (int i = 0; i < K; ++i) {
+
+        std::vector<double> p;
+        p.push_back(current_p.first);
+        p.push_back(current_p.second);
+        auto tmp_new_p = domain_generator_simulated_annealing(p);
+        std::pair<double, double> new_p = std::make_pair(tmp_new_p[0], tmp_new_p[1]);
+
+        //sorry for casting so much times doing this fast
+
+
+
+        if (f(current_p) < f(best_p)) {
+            best_p = current_p;
         } else {
-            if (ukValue < exp(-(abs(f(tk) - f(best_point)) / (1 / log(i))))) {
-                best_point = tk;
-                pairsVector.push_back(best_point);
+            if (uk(mt_generator) < exp(-(f(new_p) - f(current_p)) / K)) {
+                current_p = new_p;
             }
         }
     }
-    return best_point;
+    return best_p;
 };
 
 auto domain_generator = [](int a, int b) {
@@ -75,29 +89,22 @@ auto domain_generator = [](int a, int b) {
     return std::pair<double, double>(dis(mt_generator), dis(mt_generator));
 };
 
-auto close_points_generator = [](std::pair<double, double> p, int a, int b) -> std::vector<std::pair<double, double>> {
-    std::uniform_real_distribution<> dis(a, b);
-    return {std::pair<double, double>(dis(mt_generator), dis(mt_generator))};
+auto get_close_points_random = [](auto p0) -> std::vector<double> {
+    std::uniform_real_distribution<double> distr(-1, 1);
+    return {{p0.first + distr(mt_generator), p0.second+distr(mt_generator)}};
 };
 
-void execute(const std::function<double(std::pair<double, double>)> &f,
-             const std::function<std::pair<double, double>(int, int)> &domain,
-             const std::function<std::vector<std::pair<double, double>>(std::pair<double, double>, int, int)> &get_close_points,
-int a, int b) {
+void execute(const std::function<double(std::pair<double, double>)> &f, const std::function<std::pair<double, double>(int, int)> &domain, const std::function<std::vector<double>(std::pair<double, double>)> &get_close_points,int a, int b) {
+    int iterations = 1000000;
 
-int iterations = 1000000;
-
-auto brute_force_result = brute_force(f, domain, iterations, a, b);
-auto hill_climbing_result = hill_climbing(f, domain, get_close_points, iterations, a, b);
-auto simulated_annealing_result = simulated_annealing(f, domain, iterations, a, b);
-
-std::cout << "brute f(" << brute_force_result.first << ", " << brute_force_result.second << ") = " << f(brute_force_result)
-<< std::endl;
-std::cout << "hill f(" << hill_climbing_result.first << ", " << hill_climbing_result.second << ") = " << f(hill_climbing_result)
-<< std::endl;
-std::cout << "simulated f(" << simulated_annealing_result.first << ", " << simulated_annealing_result.second << ") = "
-<< f(simulated_annealing_result) << std::endl;
-std::cout << std::endl;
+    auto brute_force_result = brute_force(f, domain, iterations, a, b);
+    auto hill_climbing_result = hill_climbing(f, domain, iterations, a, b);
+    auto simulated_annealing_result = simulated_annealing(f, domain, iterations, a, b);
+    using namespace std;
+    cout << "brute f(" << brute_force_result.first << ", " << brute_force_result.second << ") = " << f(brute_force_result)<< endl;
+    cout << "hill f(" << hill_climbing_result.first << ", " << hill_climbing_result.second << ") = " << f(hill_climbing_result)<< endl;
+    cout << "simulated f(" << simulated_annealing_result.first << ", " << simulated_annealing_result.second << ") = "<< f(simulated_annealing_result) << endl;
+    cout << endl;
 }
 
 
@@ -118,13 +125,13 @@ int main() {
     };
 
     cout << "ackley" << endl<<endl;
-    execute(ackley_f, domain_generator, close_points_generator, -5, 5);
+    execute(ackley_f, domain_generator, get_close_points_random, -5, 5);
 
     cout << "himmelblau" << endl<<endl;
-    execute(himmelblau_f, domain_generator, close_points_generator, -5, 5);
+    execute(himmelblau_f, domain_generator, get_close_points_random, -5, 5);
 
     cout << "holderTable" << endl<<endl;
-    execute(holderTable_f, domain_generator, close_points_generator, -10, 10);
+    execute(holderTable_f, domain_generator, get_close_points_random, -10, 10);
 
     return 0;
 }
