@@ -1,69 +1,94 @@
 #include <iostream>
 #include <vector>
-#include <random>
 #include <algorithm>
+#include <cmath>
+#include <random>
+
+using namespace std;
 
 std::random_device rd;
 std::mt19937 mt_generator(rd());
 
-const int chromosome_size = 100+(23136%10*2);
-struct chromosome {
+// Add 1 to a binary number
+vector<bool> addOne(vector<bool> binary) {
+    vector<bool> result = binary;
+    for (int i = result.size() - 1; i >= 0; i--) {
+        if (result[i] == 0) {
+            result[i] = 1;
+            break;
+        }
+        else {
+            result[i] = 0;
+        }
+    }
+    return result;
+}
 
-    std::vector<bool> genes_x = std::vector<bool>(chromosome_size/4);
-    std::vector<bool> genes_x_fraction = std::vector<bool>(chromosome_size/4);
-    std::vector<bool> genes_y = std::vector<bool>(chromosome_size/4);
-    std::vector<bool> genes_y_fraction = std::vector<bool>(chromosome_size/4);
-    double fitness;
-};
+//convert integer to binary u2
+vector<bool> integerToBinary(int integer, int size) {
+    if (integer > 0){
+        vector<bool> binary(size, 0);
+        for (int i = size - 1; i >= 0; i--) {
+            if (integer % 2 == 1) {
+                binary[i] = 1;
+            }
+            integer /= 2;
+        }
+        return binary;
+    }
+    else {
+        integer = abs(integer);
+        vector<bool> binary(size, 1);
+        for (int i = size - 1; i >= 0; i--) {
+            if (integer % 2 == 1) {
+                binary[i] = 0;
+            }
+            integer /= 2;
+        }
+        return addOne(binary);
+    }
+}
 
-//decodes the chromosome into a pair of double
+//convert binary u2 to integer
+int binaryToInteger(vector<bool> binary) {
+    long long int integer = 0;
+    if (binary[0] == 1){
+        integer = -pow(2, binary.size()-1);
+    }
+    for (int i = 1; i < binary.size(); i++) {
+        if (binary[i] == 1) {
+            integer += pow(2, binary.size() - i-1);
+        }
+    }
+
+    return integer;
+}
+
+using chromosome = std::vector<bool>;
+const int chromosome_size_const = 100 + (23136 % 10 * 2);
+const double double_precision = 1000000;
+
+//encode the chromosome from a pair of double into u2
+chromosome encode_chromosome(std::pair<double, double> p) {
+    chromosome result;
+    int x = p.first * double_precision;
+    int y = p.second * double_precision;
+    vector<bool> x_binary = integerToBinary(x, chromosome_size_const / 2);
+    vector<bool> y_binary = integerToBinary(y, chromosome_size_const / 2);
+    result.insert(result.end(), x_binary.begin(), x_binary.end());
+    result.insert(result.end(), y_binary.begin(), y_binary.end());
+    return result;
+}
+
+//decode the chromosome into a pair of double
 std::pair<double, double> decode_chromosome(chromosome c) {
-    using namespace std;
-    double x = 0;
-    double y = 0;
-    for (int i = 0; i < chromosome_size/4; i++) {
-        x += c.genes_x[i] * pow(2, chromosome_size/4 - i - 1);
-        y += c.genes_y[i] * pow(2, chromosome_size/4 - i - 1);
-    }
-    for (int i = 0; i < chromosome_size/4; i++) {
-        x += c.genes_x_fraction[i] * pow(2, -i - 1);
-        y += c.genes_y_fraction[i] * pow(2, -i - 1);
-    }
-    return make_pair(x, y);
+    vector<bool> x_binary(c.begin(), c.begin() + chromosome_size_const / 2);
+    vector<bool> y_binary(c.begin() + chromosome_size_const / 2, c.end());
+    int x = binaryToInteger(x_binary);
+    int y = binaryToInteger(y_binary);
+    return std::make_pair(x / double_precision, y / double_precision);
 }
 
-//encodes a chromosome
-chromosome encode_chromosome(double x, double y) {
-    chromosome c;
-    //split the double into integer and fraction
-    int x_int = floor(x);
-    int y_int = floor(y);
-    double x_fraction = x - x_int;
-    double y_fraction = y - y_int;
-    //change fraction to integer
-    x_fraction *= pow(2, chromosome_size/4);
-    y_fraction *= pow(2, chromosome_size/4);
-    //convert the integer part to binary
-    for (int i = 0; i < chromosome_size/4; i++) {
-        c.genes_x[i] = x_int % 2;
-        x_int /= 2;
-        c.genes_y[i] = y_int % 2;
-        y_int /= 2;
-    }
-
-    //convert the fraction part to binary
-    for (int i = 0; i < chromosome_size/4; i++) {
-        c.genes_x_fraction[i] = (int)x_fraction % 2;
-        x_fraction /= 2;
-        c.genes_y_fraction[i] = (int)y_fraction % 2;
-        y_fraction /= 2;
-    }
-    reverse(c.genes_x.begin(), c.genes_x.end());
-    reverse(c.genes_x_fraction.begin(), c.genes_x_fraction.end());
-    reverse(c.genes_y.begin(), c.genes_y.end());
-    reverse(c.genes_y_fraction.begin(), c.genes_y_fraction.end());
-    return c;
-}
 
 //ackley function
 auto ackley = [](double x, double y) -> double {
@@ -72,69 +97,72 @@ auto ackley = [](double x, double y) -> double {
 };
 
 //ackley domain
-double ackley_domain_min = -32.768;
-double ackley_domain_max = 32.768;
-
+const double ackley_domain_min = -32.768;
+const double ackley_domain_max = 32.768;
 
 //fitness function
-double fitness(chromosome c , double(*f)(double, double)) {
-    auto decoded = decode_chromosome(c);
-    return 100-f(decoded.first, decoded.second);
-    //return 100-ackley(decoded.first, decoded.second);
-}
+auto fitness = [](chromosome c) -> double {
+    auto p = decode_chromosome(c);
+    return 100-ackley(p.first, p.second);
+};
 
-//generates a random chromosome
-chromosome generate_chromosome(double min = ackley_domain_min, double max = ackley_domain_max, double(*f)(double, double) = ackley) {
-    using namespace std;
+//generate a random chromosome
+chromosome generate_random_chromosome() {
     chromosome c;
-    uniform_real_distribution<double> distribution(min, max);
-    auto encoded = encode_chromosome(distribution(mt_generator), distribution(mt_generator));
-    c.genes_x = encoded.genes_x;
-    c.genes_x_fraction = encoded.genes_x_fraction;
-    c.genes_y = encoded.genes_y;
-    c.genes_y_fraction = encoded.genes_y_fraction;
-    c.fitness = fitness(encoded, f);
+    for (int i = 0; i < chromosome_size_const; i++) {
+        c.push_back(mt_generator() % 2);
+    }
     return c;
 }
 
-chromosome generate_chromosome_set(double x, double y, double(*f)(double, double) = ackley) {
-    chromosome c;
-    auto encoded = encode_chromosome(x, y);
-    c.genes_x = encoded.genes_x;
-    c.genes_x_fraction = encoded.genes_x_fraction;
-    c.genes_y = encoded.genes_y;
-    c.genes_y_fraction = encoded.genes_y_fraction;
-    c.fitness = fitness(encoded,f);
-    return c;
-}
-
-std::vector<chromosome> generate_population(int size, double min = ackley_domain_min, double max = ackley_domain_max, double(*f)(double, double) = ackley) {
-    using namespace std;
-    vector<chromosome> population(size);
-    for (int i = 0; i < size; i++) {
-        population[i] = generate_chromosome(min, max, f);
+//generate a random population
+std::vector<chromosome> generate_random_population(int population_size) {
+    std::vector<chromosome> population;
+    for (int i = 0; i < population_size; i++) {
+        population.push_back(generate_random_chromosome());
     }
     return population;
 }
 
-int main(){
-    using namespace std;
-    vector<chromosome> population = generate_population(100);
-    for (int i = 0; i < population.size(); i++) {
-        cout << "Chromosome " << i << ": ";
-        cout << "x: " << decode_chromosome(population[i]).first;
-        cout << "   y: " << decode_chromosome(population[i]).second;
-        cout << "   fitness: " << population[i].fitness << endl;
-    }
-
-    //test
-    cout << "Perfect Test assert true: ";
-    chromosome c = generate_chromosome_set(0,0);
-    cout << "x: " << decode_chromosome(c).first;
-    cout << "   y: " << decode_chromosome(c).second;
-    cout << "   fitness: " << c.fitness << endl;
-
-    return 0;
+//generate a random chromosome with encoding
+chromosome generate_random_chromosome_encoding() {
+    chromosome c;
+    uniform_real_distribution<double> distribution(ackley_domain_min, ackley_domain_max);
+    double x = distribution(mt_generator);
+    double y = distribution(mt_generator);
+    c = encode_chromosome(make_pair(x, y));
+    return c;
 }
 
+//generate a random population with encoding
+std::vector<chromosome> generate_random_population_encoding(int population_size) {
+    std::vector<chromosome> population;
+    for (int i = 0; i < population_size; i++) {
+        population.push_back(generate_random_chromosome_encoding());
+    }
+    return population;
+}
 
+//generate chromosome with encoding
+chromosome generate_chromosome_encoding(double x, double y) {
+    chromosome c;
+    c = encode_chromosome(make_pair(x, y));
+    return c;
+}
+
+int main() {
+
+    //generate a random population with encoding
+    std::vector<chromosome> population = generate_random_population_encoding(10);
+    for (auto c : population) {
+        auto p = decode_chromosome(c);
+        cout << "x: " << p.first << " y: " << p.second << " fitness: "<<fitness(c)<< endl;
+    }
+
+    //generate chromosome with encoding
+    chromosome c = generate_chromosome_encoding(0, 0);
+    cout << endl;
+    auto p = decode_chromosome(c);
+    cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(c) << endl;
+    return 0;
+}
