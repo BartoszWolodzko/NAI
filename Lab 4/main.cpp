@@ -1,25 +1,24 @@
 #include <iostream>
 #include <vector>
-#include <functional>
 #include <random>
-#include <bitset>
 #include <algorithm>
 
 std::random_device rd;
 std::mt19937 mt_generator(rd());
 
-using namespace std;
 const int chromosome_size = 100+(23136%10*2);
 struct chromosome {
-    vector<bool> genes_x = vector<bool>(chromosome_size/4);
-    vector<bool> genes_x_fraction = vector<bool>(chromosome_size/4);
-    vector<bool> genes_y = vector<bool>(chromosome_size/4);
-    vector<bool> genes_y_fraction = vector<bool>(chromosome_size/4);
+
+    std::vector<bool> genes_x = std::vector<bool>(chromosome_size/4);
+    std::vector<bool> genes_x_fraction = std::vector<bool>(chromosome_size/4);
+    std::vector<bool> genes_y = std::vector<bool>(chromosome_size/4);
+    std::vector<bool> genes_y_fraction = std::vector<bool>(chromosome_size/4);
     double fitness;
 };
 
 //decodes the chromosome into a pair of double
-pair<double, double> decode_chromosome(chromosome c) {
+std::pair<double, double> decode_chromosome(chromosome c) {
+    using namespace std;
     double x = 0;
     double y = 0;
     for (int i = 0; i < chromosome_size/4; i++) {
@@ -78,13 +77,15 @@ double ackley_domain_max = 32.768;
 
 
 //fitness function
-double fitness(chromosome c) {
+double fitness(chromosome c , double(*f)(double, double)) {
     auto decoded = decode_chromosome(c);
-    return 100-ackley(decoded.first, decoded.second);
+    return 100-f(decoded.first, decoded.second);
+    //return 100-ackley(decoded.first, decoded.second);
 }
 
 //generates a random chromosome
-chromosome generate_chromosome(double min = ackley_domain_min, double max = ackley_domain_max) {
+chromosome generate_chromosome(double min = ackley_domain_min, double max = ackley_domain_max, double(*f)(double, double) = ackley) {
+    using namespace std;
     chromosome c;
     uniform_real_distribution<double> distribution(min, max);
     auto encoded = encode_chromosome(distribution(mt_generator), distribution(mt_generator));
@@ -92,44 +93,46 @@ chromosome generate_chromosome(double min = ackley_domain_min, double max = ackl
     c.genes_x_fraction = encoded.genes_x_fraction;
     c.genes_y = encoded.genes_y;
     c.genes_y_fraction = encoded.genes_y_fraction;
-    c.fitness = fitness(encoded);
+    c.fitness = fitness(encoded, f);
     return c;
 }
 
-chromosome generate_chromosome_set(double x, double y){
+chromosome generate_chromosome_set(double x, double y, double(*f)(double, double) = ackley) {
     chromosome c;
     auto encoded = encode_chromosome(x, y);
     c.genes_x = encoded.genes_x;
     c.genes_x_fraction = encoded.genes_x_fraction;
     c.genes_y = encoded.genes_y;
     c.genes_y_fraction = encoded.genes_y_fraction;
-    c.fitness = fitness(encoded);
+    c.fitness = fitness(encoded,f);
     return c;
 }
 
-vector<chromosome> generate_population(int size, double min = ackley_domain_min, double max = ackley_domain_max) {
+std::vector<chromosome> generate_population(int size, double min = ackley_domain_min, double max = ackley_domain_max, double(*f)(double, double) = ackley) {
+    using namespace std;
     vector<chromosome> population(size);
     for (int i = 0; i < size; i++) {
-        population[i] = generate_chromosome(min, max);
+        population[i] = generate_chromosome(min, max, f);
     }
     return population;
 }
 
 int main(){
+    using namespace std;
     vector<chromosome> population = generate_population(100);
     for (int i = 0; i < population.size(); i++) {
-        cout << "Chromosome " << i << ": " << endl;
-        cout << "x: " << decode_chromosome(population[i]).first << endl;
-        cout << "y: " << decode_chromosome(population[i]).second << endl;
-        cout << "fitness: " << population[i].fitness << endl;
+        cout << "Chromosome " << i << ": ";
+        cout << "x: " << decode_chromosome(population[i]).first;
+        cout << "   y: " << decode_chromosome(population[i]).second;
+        cout << "   fitness: " << population[i].fitness << endl;
     }
 
     //test
+    cout << "Perfect Test assert true: ";
     chromosome c = generate_chromosome_set(0,0);
-    cout << "x: " << decode_chromosome(c).first << endl;
-    cout << "y: " << decode_chromosome(c).second << endl;
-    cout << "fitness: " << c.fitness << endl;
-
+    cout << "x: " << decode_chromosome(c).first;
+    cout << "   y: " << decode_chromosome(c).second;
+    cout << "   fitness: " << c.fitness << endl;
 
     return 0;
 }
