@@ -174,6 +174,21 @@ int roulette_wheel_selection(std::vector<chromosome> population) {
     return 0;
 }
 
+//two point crossover
+chromosome two_point_crossover(chromosome c1, chromosome c2) {
+    uniform_int_distribution<int> distribution(1, chromosome_size_const - 1);
+    int point1 = distribution(mt_generator);
+    int point2 = distribution(mt_generator);
+    if (point1 > point2) {
+        std::swap(point1, point2);
+    }
+    chromosome result;
+    result.insert(result.end(), c1.begin(), c1.begin() + point1);
+    result.insert(result.end(), c2.begin() + point1, c2.begin() + point2);
+    result.insert(result.end(), c1.begin() + point2, c1.end());
+    return result;
+}
+
 //crossover
 chromosome crossover(std::vector<chromosome> population) {
     //select two random ints
@@ -204,28 +219,6 @@ chromosome mutation(chromosome c) {
     return c;
 }
 
-//two point crossover
-chromosome two_point_crossover(std::vector<chromosome> population) {
-    //select two random ints
-    int index1 = std::uniform_int_distribution<int> (0, population.size() - 1)(mt_generator);
-    int index2 = std::uniform_int_distribution<int> (0, population.size() - 1)(mt_generator);
-
-    //select two random chromosomes
-    chromosome c1 = population[index1];
-    chromosome c2 = population[index2];
-
-    //select two random crossover points
-    int crossover_point1 = std::uniform_int_distribution<int> (0, chromosome_size_const - 1)(mt_generator);
-    int crossover_point2 = std::uniform_int_distribution<int> (0, chromosome_size_const - 1)(mt_generator);
-
-    //perform crossover
-    chromosome child;
-    child.insert(child.end(), c1.begin(), c1.begin() + crossover_point1);
-    child.insert(child.end(), c2.begin() + crossover_point1, c2.begin() + crossover_point2);
-    child.insert(child.end(), c1.begin() + crossover_point2, c1.end());
-    return child;
-}
-
 //multi-point mutation
 chromosome multi_point_mutation(chromosome c, int number_of_points_to_mutate){
     //select a random mutation point
@@ -236,6 +229,8 @@ chromosome multi_point_mutation(chromosome c, int number_of_points_to_mutate){
     }
     return c;
 }
+
+
 
 int main() {
 
@@ -267,22 +262,23 @@ int main() {
     cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(child) << endl;
 
     //test mutation
-    cout << endl<< "before mutation" << endl;
+    cout << endl<< "mutation" << endl;
     chromosome mutated_child = mutation(child);
     p = decode_chromosome(mutated_child);
     cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(mutated_child) << endl;
 
-    //test two point crossover
-    cout << endl<< "two point crossover" << endl;
-    chromosome child2 = two_point_crossover(population);
-    p = decode_chromosome(child2);
-    cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(child2) << endl;
-
-    //test multi point mutation
-    cout << endl<<"multi point mutation" << endl;
-    chromosome mutated_child2 = multi_point_mutation(child2, 4);
+    //test multi-point mutation
+    cout << endl<< "multi-point mutation" << endl;
+    chromosome mutated_child2 = multi_point_mutation(child, 2);
     p = decode_chromosome(mutated_child2);
     cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(mutated_child2) << endl;
+
+    //test two-point crossover
+    cout << endl << "two-point crossover" << endl;
+    chromosome child2 = two_point_crossover(population[0], population[1]);
+    p = decode_chromosome(child2);
+    cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(child2) << endl;
+    
 
     return 0;
 }
