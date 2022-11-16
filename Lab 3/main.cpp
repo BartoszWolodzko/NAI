@@ -77,7 +77,7 @@ auto simulated_annealing = [](
         p.push_back(current_p.first);
         p.push_back(current_p.second);
         auto tmp_new_p = domain_generator_simulated_annealing(p);
-        std::pair<double, double> new_p = std::make_pair(tmp_new_p[0], tmp_new_p[1]);
+        std::pair<double, double> new_p = {tmp_new_p[0], tmp_new_p[1]};
 
         //sorry for casting so much times doing this fast
 
