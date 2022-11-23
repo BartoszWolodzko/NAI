@@ -159,13 +159,11 @@ chromosome crossover(chromosome c1, chromosome c2) {
     return child;
 }
 
-chromosome uniform_mutation(chromosome c) {
-    uniform_int_distribution<int> distribution(0, 1);
-    int mutation_point = distribution(mt_generator);
-
-    for (int i = (c.size()/2)*mutation_point; i < (c.size()/2)*(mutation_point+1); ++i) {
-        int random = distribution(mt_generator);
-        c[i] = random;
+chromosome uniform_mutation(chromosome c, double mutation_rate) {
+    for (int i = 0; i < chromosome_size_const; i++) {
+        if (std::uniform_real_distribution<double> (0, 1)(mt_generator) < mutation_rate) {
+            c[i] = !c[i];
+        }
     }
     return c;
 }
@@ -289,7 +287,7 @@ int main() {
 
     //test uniform mutation
     cout << endl << "uniform mutation" << endl;
-    chromosome uniform_mutated_child = uniform_mutation(c);
+    chromosome uniform_mutated_child = uniform_mutation(c,0.9);
     compare_chromosomes(c, uniform_mutated_child);
     p = decode_chromosome(uniform_mutated_child);
     cout << "x: " << p.first << " y: " << p.second << " fitness: " << fitness(uniform_mutated_child) << endl;
