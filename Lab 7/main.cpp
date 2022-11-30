@@ -9,8 +9,8 @@ using namespace std;
 std::random_device rd;
 std::mt19937 mt_generator(rd());
 using chromosome = std::vector<bool>;
-const int chromosome_size_const = 100 + (23136 % 10 * 2);
-const double double_precision = 10000000000000;
+const int chromosome_size_const = 94;
+const double double_precision = 10000000000;
 
 vector<bool> addOne(vector<bool> binary) {
     vector<bool> result = binary;
@@ -93,7 +93,7 @@ const double ackley_domain_max = 32.768;
 
 auto fitness = [](chromosome c) -> double {
     auto p = decode_chromosome(c);
-    return 100-ackley(p.first, p.second);
+    return 1.0 / (1.0 + std::abs(ackley(p.first, p.second))) * 100.0;
 };
 
 std::vector<chromosome> crossover(std::vector<chromosome> chromosomes) {
@@ -340,10 +340,10 @@ int main(int argc, char **argv) {
 
     // 100 10000 0.01 0.7 1 0.01
 
-    int population_size = (argc > 1) ? std::stoi(argv[1]) : 5000;
+    int population_size = (argc > 1) ? std::stoi(argv[1]) : 9000;
     int number_of_generations = (argc > 2) ? std::stoi(argv[2]) : 100000000;
-    double mutation_rate = (argc > 3) ? std::stod(argv[3]) : 0.02;
-    double crossover_rate = (argc > 4) ? std::stod(argv[4]) : 0.8;
+    double mutation_rate = (argc > 3) ? std::stod(argv[3]) : 0.06;
+    double crossover_rate = (argc > 4) ? std::stod(argv[4]) : 0.4;
     bool show_progress = (argc > 5) ? std::stoi(argv[5]) : true;
     double standard_deviation_value = (argc > 6) ? std::stod(argv[6]) : 0.001;
 
